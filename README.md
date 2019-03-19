@@ -1,1 +1,0 @@
-# Cylindrical-Li-Ion-Thermal-Testing
