@@ -178,38 +178,64 @@ class FinalFileClass(CsvTimeAndTempDataClass,Bt2ParserClass):
             self.FinalDoD.append(str(float(self.ExtraAccumulatedDischarge[i])/3600/self.TotalAmpHour))
             
             DeltaT = float(self.FinalThermo[i])-float(self.FinalCJ[i])
-            self.ExtraUADT.append(self.UA*DeltaT)
+            self.ExtraUADT.append("$I$1*"+str(DeltaT))
             
-def WriteCSVFileHeatGenVsDoD(MainSubDir,FinalClass):
+def WriteCSVFileHeatGenVsDoD(MainSubDir,FinalClass,StepSize):
     FinalCsvFileObj = open(MainSubDir+'\\FinalHeatGen.csv','w')
     FinalClass.FindInterpolatedCsvValues()
     FinalClass.CalculateValues() # Calculate values
+    
+    # Print the header
     print('Time [s],Voltage [V],Current [A],Thermo Ave,CJ Ave,Depth Of Discharge [%],Heat Generated [W],'+str(mCp)+','+str(UA),file=FinalCsvFileObj)
+    
+    # Declare lists that would be used
     XList = range(0,40,1)
     YList = []
+    
+    FirstStep = True
+    # Loop through
     for i in range(0,len(FinalClass.FinalTime)-1,1):
-        YList.append(float(FinalClass.FinalThermo[i]))
-        if (i % StepSize) == 0 or i == len(FinalClass.FinalTime)-1:
-            if i == 0:
-                TotalHeatGenstr = str(FinalClass.ExtraUADT[i])
-            else:
-                LinRegObj = LinearRegClass(XList,YList)
-                TotalHeatGenstr = '='+str(mCp)+'*'+str(LinRegObj.Gradient)+'+'+str(FinalClass.ExtraUADT[i])
-                
+        # Check to see if it has reacdhed outside of the first step
+        if (i % StepSize) == 0 and i != 0: # It is a step of 40
+            if FirstStep == True:
+                FirstStep = False
+        # Do you need to add or print
+        if FirstStep == True: # It has not gotten past the first 40 rows
+            YList.append(float(FinalClass.FinalThermo[i]))
+        else: # Not the first step,
+            del YList[0]
+            YList.append(float(FinalClass.FinalThermo[i]))
+            LinRegObj = LinearRegClass(XList,YList)
+            #                   mCp
+            TotalHeatGenstr = '=$H$1*'+str(LinRegObj.Gradient)+'+'+FinalClass.ExtraUADT[i]
             print(FinalClass.FinalTime[i]+','+FinalClass.FinalVoltage[i]+','+\
                   FinalClass.FinalCurrent[i]+','+FinalClass.FinalThermo[i]+','+FinalClass.FinalCJ[i]+','+\
                   FinalClass.FinalDoD[i]+','+TotalHeatGenstr,file=FinalCsvFileObj)
-            YList.clear()
-        else:
-            print(FinalClass.FinalTime[i]+','+FinalClass.FinalVoltage[i]+','+\
-                  FinalClass.FinalCurrent[i]+','+FinalClass.FinalThermo[i]+','+FinalClass.FinalCJ[i]+','+\
-                  FinalClass.FinalDoD[i],file=FinalCsvFileObj)
+        
+
     FinalCsvFileObj.close()
+        
+#        if (i % StepSize) == 0 or i == len(FinalClass.FinalTime)-1:
+#            if i == 0:
+#                TotalHeatGenstr = str(FinalClass.ExtraUADT[i])
+#            else:
+#                LinRegObj = LinearRegClass(XList,YList)
+#                TotalHeatGenstr = '='+str(mCp)+'*'+str(LinRegObj.Gradient)+'+'+str(FinalClass.ExtraUADT[i])
+#                
+#            print(FinalClass.FinalTime[i]+','+FinalClass.FinalVoltage[i]+','+\
+#                  FinalClass.FinalCurrent[i]+','+FinalClass.FinalThermo[i]+','+FinalClass.FinalCJ[i]+','+\
+#                  FinalClass.FinalDoD[i]+','+TotalHeatGenstr,file=FinalCsvFileObj)
+#            YList.clear()
+#        else:
+#            print(FinalClass.FinalTime[i]+','+FinalClass.FinalVoltage[i]+','+\
+#                  FinalClass.FinalCurrent[i]+','+FinalClass.FinalThermo[i]+','+FinalClass.FinalCJ[i]+','+\
+#                  FinalClass.FinalDoD[i],file=FinalCsvFileObj)
+    
     
     
 # TODO: Set these variables when editing values
 # The directory that you would like to process    
-Path = "C:\\Users\\Alexander\\Desktop\\ELECTRO\\Thermo_Testing\\3 Part Test\\_Second\\2019-3-6_0-27-21_Testing_IR"
+Path = "C:\\Users\\Alexander\\Desktop\\ELECTRO\\Thermo_Testing\\3 Part Test\\_FIrst\\2019-2-27_18-48-9_Testing_Discharge\\6_a_discharge"
 MainSubDir = Path + "\\_ProcessedData"
 # Thermo Testing Variables
 UA = 0.013 # The UA value of the 
@@ -239,7 +265,7 @@ if Files.Error == False:
             except OSError:  
                 print ("Creation of the directory "+MainSubDir+" failed")
             else:  
-                WriteCSVFileInternalResistance(MainSubDir,FinalClass,RestTime,LowOnTime,HighOnTime,LowCurrent,HighCurrent)
+                WriteCSVFileHeatGenVsDoD(MainSubDir,FinalClass,StepSize)
                 print('finished...')
 
 
