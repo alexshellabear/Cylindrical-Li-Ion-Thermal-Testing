@@ -1,7 +1,7 @@
 #include <Adafruit_MAX31856.h>
 // Heating control relay locations
 #define RELAY_ONE 2 // relay one is connected to digital pin 2
-#define RELAY_TWO 3 // relay three is connected to digital pin 3
+#define RELAY_TWO 3 // relay two is connected to digital pin 3
 #define RELAY_THREE 4 // relay three is connected to digital pin 4
 // Used to determine heating control
 #define OFF_HEAT 0
